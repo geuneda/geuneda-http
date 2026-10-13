@@ -1,0 +1,17 @@
+{
+    "name": "Geuneda.Http",
+    "rootNamespace": "Geuneda.Http",
+    "references": [
+        "Geuneda.Core",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

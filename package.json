@@ -1,0 +1,17 @@
+{
+  "name": "com.geuneda.http",
+  "displayName": "Geuneda Http",
+  "author": "geuneda",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "license": "MIT",
+  "description": "UnityWebRequest 기반 HTTP 클라이언트입니다. 미들웨어 체인(order, 등록 순서), 결과는 Result<HttpResponse>(연결 실패·타임아웃·취소는 코드, 4xx/5xx 는 상태 코드 응답), JSON 편의 메서드, 선택형 타임아웃·재시도·기본 헤더 미들웨어.",
+  "type": "library",
+  "hideInEditor": false,
+  "dependencies": {
+    "com.geuneda.core": "0.1.0",
+    "com.cysharp.unitask": "2.5.10",
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.modules.unitywebrequest": "1.0.0"
+  }
+}
