@@ -4,7 +4,7 @@
 이 형식은 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)를 기반으로 하며,
 이 프로젝트는 [Semantic Versioning](http://semver.org/spec/v2.0.0.html)을 따릅니다.
 
-## [Unreleased]
+## [0.1.0] - 2026-10-13
 
 **New**:
 - `HttpClient`(`IHttpClient`)와 `HttpClientBuilder`: 기본 주소, 미들웨어 `(order, 등록 순서)` 체인, 교체 가능한 전송, JSON 설정
