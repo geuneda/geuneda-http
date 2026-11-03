@@ -124,6 +124,7 @@ if (result.IsSuccess && response.IsSuccessStatusCode)
 
 - `NativeHttpTransport`(안드로이드): Java 작업 스레드의 `HttpURLConnection` 으로 보내고, 요청·응답 바이트는 `NativeArray` 를 감싼 직접 버퍼로 주고받습니다. JNI 메서드 ID 와 인자 배열은 미리 잡아 두고 매 프레임 상태 숫자만 읽습니다. 데워진 뒤에는 요청마다 C# 할당이 없게 만들었습니다. 이 주장은 가짜 네이티브 통로로 C# 경로를 잰 것이고(Release 컴파일, Debug 컴파일은 async 상태 기계가 클래스라 할당합니다), 실제 JNI·IL2CPP 경로는 실기기 측정으로 확인해야 합니다. PATCH 와 본문 있는 GET·HEAD 는 `NotSupportedException`, 네이티브가 거절한 주소(잘못된 포트 등)·헤더 값은 `ArgumentException` 입니다(대체 구현과 같음). 응답 헤더는 읽지 않습니다.
 - `UnityWebRequestBufferTransport`: 에디터·iOS 용. 요청마다 `HttpRequest` 로 바꿔 보내므로 할당합니다.
+- 본문이 조금씩 커지는 반복 요청(클라우드 세이브 등)은 앞서 `Reserve(requestBytes)` 로 주소·헤더·본문을 합한 크기만큼 버퍼를 잡아 두면 요청 도중 키우지 않습니다. 버퍼를 키울 때는 필요량의 1.5배 이상으로 키웁니다.
 - `IHttpBufferTransport` 는 `IDisposable` 입니다. 네이티브 구현은 직접 버퍼와 JNI 참조를 가지므로 다 쓰면 메인 스레드에서 닫습니다(`MainInstaller.CleanDispose<IHttpBufferTransport>()` 가능).
 - 요청 프레임 형식은 `HttpBufferFrame`(C#)과 `NativeHttpChannel.parse`(Java)가 짝입니다. Java 쪽은 `Tests/Java~/run.sh` 가 데스크톱 JDK 와 로컬 서버로 확인합니다.
 

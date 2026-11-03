@@ -47,6 +47,16 @@ namespace Geuneda.Http
 			_idle.Push(_createChannel());
 		}
 
+		public void Reserve(int requestBytes)
+		{
+			if (requestBytes > _frame.Length)
+			{
+				_frame = new byte[requestBytes];
+			}
+		}
+
+		internal int FrameCapacity => _frame.Length;
+
 		public async UniTask<Result> SendAsync(HttpBufferRequest request, HttpBufferResponse response, CancellationToken cancellationToken)
 		{
 			if (request == null)

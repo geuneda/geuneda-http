@@ -209,6 +209,31 @@ namespace Geuneda.Http.Tests
 			Assert.AreEqual(GoldenFrame, Hex(_channels[0].LastFrame, _channels[0].LastFrame.Length));
 		}
 
+		// 반복 요청의 본문이 기본 프레임(16KB)보다 커도 Reserve 해 두면 요청 도중 프레임을 새로 만들지 않는다
+		[Test]
+		public void Reserve_ThenLargerRequest_KeepsFrame()
+		{
+			_transport.Reserve(64 * 1024);
+			Assert.AreEqual(64 * 1024, _transport.FrameCapacity);
+			var request = GoldenRequest();
+			request.SetBody(new byte[40 * 1024], "application/json");
+
+			Assert.IsTrue(Run(_transport.SendAsync(request, new HttpBufferResponse(), CancellationToken.None)).IsSuccess);
+			Assert.AreEqual(64 * 1024, _transport.FrameCapacity, "the reserved frame is reused");
+			_transport.Reserve(1024);
+			Assert.AreEqual(64 * 1024, _transport.FrameCapacity, "reserve never shrinks");
+		}
+
+		// 프레임을 키울 때는 반만큼 여유를 둬 바로 다음 조금 큰 요청에서 다시 키우지 않는다
+		[Test]
+		public void FrameGrowth_LeavesHeadroom()
+		{
+			var request = GoldenRequest();
+			request.SetBody(new byte[40 * 1024], "application/json");
+			Run(_transport.SendAsync(request, new HttpBufferResponse(), CancellationToken.None));
+			Assert.GreaterOrEqual(_transport.FrameCapacity, 60 * 1024);
+		}
+
 		[TestCase(NativeHttpState.NetworkError, ResultCodes.NetworkError)]
 		[TestCase(NativeHttpState.Timeout, ResultCodes.Timeout)]
 		[TestCase(NativeHttpState.Cancelled, ResultCodes.Cancelled)]

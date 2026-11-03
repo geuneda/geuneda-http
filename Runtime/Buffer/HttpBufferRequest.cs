@@ -129,7 +129,7 @@ namespace Geuneda.Http
 
 			if (_body.Length < body.Length)
 			{
-				_body = new byte[Math.Max(body.Length, _body.Length * 2)];
+				_body = new byte[Math.Max(body.Length + body.Length / 2, _body.Length * 2)];
 			}
 
 			body.CopyTo(_body);

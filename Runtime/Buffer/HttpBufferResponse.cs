@@ -50,7 +50,7 @@ namespace Geuneda.Http
 
 			if (_buffer.Length < length)
 			{
-				_buffer = new byte[Math.Max(length, _buffer.Length * 2)];
+				_buffer = new byte[Math.Max(length + length / 2, _buffer.Length * 2)];
 			}
 
 			StatusCode = statusCode;

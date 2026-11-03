@@ -4,6 +4,14 @@
 이 형식은 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)를 기반으로 하며,
 이 프로젝트는 [Semantic Versioning](http://semver.org/spec/v2.0.0.html)을 따릅니다.
 
+## [0.2.1] - 2026-11-03
+
+**New**:
+- `IHttpBufferTransport.Reserve(int requestBytes)`(기본 구현은 아무것도 안 함): 요청 하나를 그 크기까지 할당 없이 보내도록 내부 버퍼를 미리 키운다. `NativeHttpTransport` 는 요청 프레임 버퍼를 키운다(줄이지 않음). 반복 요청의 본문이 조금씩 커질 때 요청 도중 버퍼를 키우지 않게 앞서 부른다
+
+**Changed**:
+- 요청 프레임·`HttpBufferRequest` 본문·`HttpBufferResponse` 버퍼를 키울 때 필요량의 1.5배와 2배 중 큰 값으로 키운다(예전에는 필요량이 2배를 넘으면 딱 맞게 키워 바로 다음 조금 큰 요청에서 다시 키웠다)
+
 ## [0.2.0] - 2026-11-03
 
 **New**:

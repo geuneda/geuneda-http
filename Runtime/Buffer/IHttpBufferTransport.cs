@@ -22,5 +22,13 @@ namespace Geuneda.Http
 		/// <exception cref="System.ArgumentNullException">요청이나 응답이 null 인 경우</exception>
 		/// <exception cref="System.ArgumentException">주소가 http(s) 절대 주소가 아니거나 형식이 틀린 경우, 헤더가 잘못된 경우</exception>
 		UniTask<Result> SendAsync(HttpBufferRequest request, HttpBufferResponse response, CancellationToken cancellationToken);
+
+		/// <summary>
+		/// 요청 하나(주소·헤더·본문 포함)를 <paramref name="requestBytes"/> 바이트까지 할당 없이 보내도록 내부 버퍼를 미리 키웁니다.
+		/// 반복 요청의 본문이 조금씩 커질 때 요청 도중 버퍼를 키우지 않게 앞서 부릅니다. 메인 스레드에서 부릅니다. 기본 구현은 아무것도 하지 않습니다.
+		/// </summary>
+		void Reserve(int requestBytes)
+		{
+		}
 	}
 }

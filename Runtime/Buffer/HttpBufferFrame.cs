@@ -45,7 +45,8 @@ namespace Geuneda.Http
 
 			if (buffer == null || buffer.Length < size)
 			{
-				buffer = new byte[Math.Max(size, buffer == null ? 0 : buffer.Length * 2)];
+				// 딱 맞게 키우면 본문이 조금 커질 때 다시 키운다. 반만큼 여유를 둔다
+				buffer = new byte[Math.Max(size + size / 2, buffer == null ? 0 : buffer.Length * 2)];
 			}
 
 			var at = 0;
