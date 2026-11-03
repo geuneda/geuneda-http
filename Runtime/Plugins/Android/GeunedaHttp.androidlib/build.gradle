@@ -1,0 +1,26 @@
+plugins {
+    id 'com.android.library'
+}
+
+// Geuneda.Http 의 Android 라이브러리(NativeHttpTransport 의 Java 쪽). 의존성 없음
+def unityLib = project(':unityLibrary').extensions.getByName('android')
+
+android {
+    // Unity 2021.3(AGP 4.0)에는 namespace 가 없어 AndroidManifest 의 package 를 쓴다
+    if (project.android.hasProperty("namespace")) {
+        namespace "com.geuneda.http"
+    }
+
+    compileSdkVersion unityLib.compileSdkVersion
+    buildToolsVersion unityLib.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion 21
+        consumerProguardFiles "proguard-rules.pro"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}

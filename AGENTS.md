@@ -19,7 +19,13 @@
 - 결과 코드는 1000 블록(`HttpResultCodes`, core README 의 범위 표에 등록). 값은 바꾸거나 재사용하지 않습니다.
 - static 가변 상태 금지(D2). 클라이언트는 인스턴스로 만들어 `MainInstaller.Bind<IHttpClient>` 로 바인딩합니다.
 
+- **버퍼 전송**: `IHttpBufferTransport` 는 미들웨어 체인 밖의 별도 경로입니다(`IHttpTransport` 는 바꾸지 않는 객체를 주고받아 무할당이 안 됩니다). `NativeHttpTransport` 의 요청 경로(프레임 쓰기, `Start`, 폴링, 응답 복사)에 할당을 넣지 마세요. 테스트 `Send_Warm*_DoesNotAllocate` 가 Release 컴파일에서 잽니다. 오류 메시지 문자열은 실패 때만 만듭니다. 대기 루프는 취소·해제·제한 시간을 상태보다 먼저 봅니다. Java 는 연결 전 설정(주소·메서드·헤더) 실패를 `INVALID_REQUEST` 로 돌려주고 C# 은 `ArgumentException` 으로 던집니다(대체 구현의 오용 예외와 맞춤). JNI 호출은 하나마다 Java 예외를 확인합니다.
+- 요청 프레임 형식을 바꾸면 `HttpBufferFrame`(C#), `NativeHttpChannel.parse`(Java), 두 테스트의 기준 바이트(`GoldenFrame`, `GOLDEN_FRAME`)를 함께 바꿉니다. Java `start`·`copyResponse` 는 넘겨받은 직접 버퍼를 돌아오기 전에 다 읽고 써야 합니다(C# 이 바로 다시 씁니다). `cancel` 은 요청을 떼어 내 다음 `start` 를 바로 받습니다.
+- JNI 코드는 `#if UNITY_ANDROID` 안에 두고 `Application.isEditor` 로 고릅니다(빌드 대상이 안드로이드인 에디터에서도 컴파일 확인이 되게).
+
 ## 3. 테스트
 
 - `Tests/EditMode/` (`Geuneda.Http.Tests.EditMode`): `FakeTransport` 로 체인 순서, 주소, 결과 변환, JSON, 미들웨어. 비동기 흐름이 동기적으로 끝나는지 `FakeTransport.Run` 이 확인합니다.
+- `Tests/EditMode/HttpBufferTransportTest`: 가짜 `INativeHttpChannel` 로 프레임 기준 바이트, 상태 → 결과 코드, 취소·제한 시간·동시 요청·해제, 무할당(Release 컴파일에서만, Debug 는 건너뜀: `-releaseCodeOptimization` 으로 실행).
+- `Tests/Java~/run.sh`: `NativeHttpChannel` 을 데스크톱 JDK 로 컴파일해 로컬 `HttpServer` 와 왕복(상태 코드, 본문, 큰 응답, 연결 실패, 읽기 제한 시간, 취소 뒤 재시작). Unity 가 `~` 폴더를 무시해 패키지에 들어가지 않습니다.
 - `Tests/PlayMode/` (`Geuneda.Http.Tests.PlayMode`): 로컬 `HttpListener`(127.0.0.1, 빈 포트)로 실제 UnityWebRequest 의 상태 코드, POST 본문, 연결 실패, 타임아웃, 취소, 백그라운드 스레드 호출을 확인합니다. 프로젝트의 HTTP 허용 설정이 꺼져 있어도 에디터에서 `http://127.0.0.1` 이 동작하는지는 이 테스트로 확인합니다.

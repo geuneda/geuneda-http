@@ -8,6 +8,7 @@ UnityWebRequest 기반 HTTP 클라이언트입니다. 공통 처리는 미들웨
 | 요청·응답 | `HttpRequest`, `HttpResponse`, `HttpMethod` | `Geuneda.Http` |
 | 미들웨어 | `IHttpMiddleware`, `HttpHandler`, `TimeoutMiddleware`, `RetryMiddleware`, `DefaultHeadersMiddleware` | `Geuneda.Http` |
 | 전송 | `IHttpTransport`, `UnityWebRequestTransport` | `Geuneda.Http` |
+| 버퍼 전송(반복 요청 무할당) | `IHttpBufferTransport`, `HttpBufferRequest`, `HttpBufferResponse`, `NativeHttpTransport`, `UnityWebRequestBufferTransport`, `HttpBufferTransports` | `Geuneda.Http` |
 | 결과 코드 | `HttpResultCodes`(1000 블록) | `Geuneda.Http` |
 
 ## 설치
@@ -102,6 +103,30 @@ public sealed class SessionHeaderMiddleware : IHttpMiddleware
 
 타임아웃과 재시도는 기본으로 켜져 있지 않습니다. 필요한 클라이언트에 미들웨어로 추가합니다.
 
+### 버퍼 전송
+
+주기 동기화처럼 같은 요청을 반복해서 보낼 때 C# 할당을 없애는 경로입니다. 요청·응답 객체를 한 번 만들어 다시 씁니다.
+미들웨어·기본 주소·재시도는 거치지 않으니 필요하면 부르는 쪽에서 다시 보냅니다. 결과 규약은 `IHttpTransport` 와 같습니다(4xx·5xx 는 성공 `Result` 의 상태 코드).
+
+```csharp
+var transport = HttpBufferTransports.CreateDefault(); // 안드로이드 플레이어는 네이티브, 그 밖은 UnityWebRequest. 만든 쪽이 Dispose 한다
+var request = new HttpBufferRequest { Url = "https://api.example.com/v1/save", Timeout = TimeSpan.FromSeconds(30) };
+var response = new HttpBufferResponse();
+
+request.SetHeader("Authorization", "Bearer " + token);
+request.SetBody(bodyBytes, "application/json"); // 내부 버퍼로 복사
+var result = await transport.SendAsync(request, response, ct);
+if (result.IsSuccess && response.IsSuccessStatusCode)
+{
+    Parse(response.Body); // ReadOnlySpan<byte>, 다음 요청에서 덮인다
+}
+```
+
+- `NativeHttpTransport`(안드로이드): Java 작업 스레드의 `HttpURLConnection` 으로 보내고, 요청·응답 바이트는 `NativeArray` 를 감싼 직접 버퍼로 주고받습니다. JNI 메서드 ID 와 인자 배열은 미리 잡아 두고 매 프레임 상태 숫자만 읽습니다. 데워진 뒤에는 요청마다 C# 할당이 없게 만들었습니다. 이 주장은 가짜 네이티브 통로로 C# 경로를 잰 것이고(Release 컴파일, Debug 컴파일은 async 상태 기계가 클래스라 할당합니다), 실제 JNI·IL2CPP 경로는 실기기 측정으로 확인해야 합니다. PATCH 와 본문 있는 GET·HEAD 는 `NotSupportedException`, 네이티브가 거절한 주소(잘못된 포트 등)·헤더 값은 `ArgumentException` 입니다(대체 구현과 같음). 응답 헤더는 읽지 않습니다.
+- `UnityWebRequestBufferTransport`: 에디터·iOS 용. 요청마다 `HttpRequest` 로 바꿔 보내므로 할당합니다.
+- `IHttpBufferTransport` 는 `IDisposable` 입니다. 네이티브 구현은 직접 버퍼와 JNI 참조를 가지므로 다 쓰면 메인 스레드에서 닫습니다(`MainInstaller.CleanDispose<IHttpBufferTransport>()` 가능).
+- 요청 프레임 형식은 `HttpBufferFrame`(C#)과 `NativeHttpChannel.parse`(Java)가 짝입니다. Java 쪽은 `Tests/Java~/run.sh` 가 데스크톱 JDK 와 로컬 서버로 확인합니다.
+
 ### HTTP 주소
 
 Player Settings 의 **Allow downloads over HTTP** 가 꺼져 있으면 플레이어에서 `http://` 요청이 막힐 수 있습니다. 운영 서버는 `https://` 를 쓰세요. 에디터에서는 이 설정이 꺼져 있어도 `http://127.0.0.1` 요청이 동작하는 것을 PlayMode 테스트로 확인했습니다.
@@ -109,7 +134,7 @@ Player Settings 의 **Allow downloads over HTTP** 가 꺼져 있으면 플레이
 ## 요구 사항
 
 - Unity 2021.3 이상
-- `com.geuneda.core` 0.1.0, `com.cysharp.unitask` 2.5.10, `com.unity.nuget.newtonsoft-json` 3.2.1, `com.unity.modules.unitywebrequest` 1.0.0
+- `com.geuneda.core` 0.1.0, `com.cysharp.unitask` 2.5.10, `com.unity.nuget.newtonsoft-json` 3.2.1, `com.unity.modules.unitywebrequest` 1.0.0, `com.unity.modules.androidjni` 1.0.0
 
 변경 이력은 [CHANGELOG.md](CHANGELOG.md) 를 참고하세요.
 

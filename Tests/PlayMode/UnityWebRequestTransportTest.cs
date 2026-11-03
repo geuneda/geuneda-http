@@ -180,6 +180,30 @@ namespace Geuneda.Http.Tests.PlayMode
 		});
 
 		[UnityTest]
+		public IEnumerator BufferTransport_PostEchoes_AndNotFoundIsResponse() => UniTask.ToCoroutine(async () =>
+		{
+			var transport = new UnityWebRequestBufferTransport();
+			var request = new HttpBufferRequest { Url = _server.BaseAddress + "echo" };
+			request.SetBody(Encoding.UTF8.GetBytes("buffered"), "text/plain");
+			var response = new HttpBufferResponse(1);
+
+			var sent = await transport.SendAsync(request, response, CancellationToken.None);
+
+			Assert.IsTrue(sent.IsSuccess);
+			Assert.AreEqual(200, response.StatusCode);
+			Assert.AreEqual("buffered", response.ReadText());
+
+			request.Url = _server.BaseAddress + "missing";
+			request.Method = HttpMethod.Get;
+			request.ClearBody();
+			var missing = await transport.SendAsync(request, response, CancellationToken.None);
+
+			Assert.IsTrue(missing.IsSuccess);
+			Assert.AreEqual(404, response.StatusCode);
+			Assert.AreEqual("not here", response.ReadText());
+		});
+
+		[UnityTest]
 		public IEnumerator ConnectionRefused_IsNetworkError() => UniTask.ToCoroutine(async () =>
 		{
 			var result = await _client.GetAsync($"http://127.0.0.1:{GetFreePort()}/nothing");
